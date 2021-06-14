@@ -20,10 +20,7 @@ class Config(object):
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     ADMINS = ['your-email@example.com']
-
-    # Storage Location
-    UPLOAD_FOLDER = './app/static/uploads'
-    IMAGE_FOLDER = './app/static/images'
+    POSTS_PER_PAGE = 25
 
 class DevelopmentConfig(Config):
     """Development Config that extends the Base Config Object"""

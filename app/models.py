@@ -1,9 +1,10 @@
 from datetime import datetime
 from hashlib import md5
-from . import db, login
+from time import time
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-
+import jwt
+from app import app, db, login
 
 followers = db.Table(
     'followers',
@@ -35,10 +36,10 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-    # def avatar(self, size):
-    #     digest = md5(self.email.lower().encode('utf-8')).hexdigest()
-    #     return 'https://www.gravatar.com/avatar/{}?d=identicon&s={}'.format(
-    #         digest, size)
+    def avatar(self, size):
+        digest = md5(self.email.lower().encode('utf-8')).hexdigest()
+        return 'https://www.gravatar.com/avatar/{}?d=identicon&s={}'.format(
+            digest, size)
 
     def follow(self, user):
         if not self.is_following(user):
@@ -58,6 +59,18 @@ class User(UserMixin, db.Model):
                 followers.c.follower_id == self.id)
         own = Post.query.filter_by(user_id=self.id)
         return followed.union(own).order_by(Post.timestamp.desc())
+
+    def get_reset_password_token(self, expires_in=600):
+        return jwt.encode({'reset_password': self.id, 'exp': time() + expires_in},app.config['SECRET_KEY'], algorithm='HS256').decode('utf-8')
+
+    @staticmethod
+    def verify_reset_password_token(token):
+        try:
+            id = jwt.decode(token, app.config['SECRET_KEY'],
+                            algorithms=['HS256'])['reset_password']
+        except:
+            return
+        return User.query.get(id)
 
 
 @login.user_loader
